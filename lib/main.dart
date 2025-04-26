@@ -1,32 +1,20 @@
 import 'dart:async';
-import 'dart:io';
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-import 'background_methods.dart';
-
-
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  DartPluginRegistrant.ensureInitialized();
-  // await initializeService();//background services
-
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
@@ -38,8 +26,6 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
-
-
   final String title;
 
   @override
@@ -47,107 +33,70 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  static const platform = MethodChannel("myLocationTracking");
+  static const eventChannel = EventChannel("myLocationUpdates");
+  StreamSubscription<dynamic>? _locationSubscription;
+  String _location = "Waiting for location...";
 
+  @override
+  void initState() {
+    super.initState();
+    _startListeningToLocationUpdates();
+  }
 
-  var platform = const MethodChannel("myLocationTracking");
-
-  startService() async {
+  Future<void> _startService() async {
     try {
       await platform.invokeMethod('startService');
-
     } on PlatformException catch (e) {
-      print("Failed to get count: '${e.message}'.");
-      return 0;
+      print("Failed to start service: ${e.message}");
     }
   }
 
-  String count="0";
-  getCount()async{
-    var getCountChannel = const MethodChannel("getCountChannel");
-    String co="0";
-    try {
-      co= await getCountChannel.invokeMethod('getCount');
-
-    } on PlatformException catch (e) {
-      print("Failed to get count: '${e.message}'.");
-      co="0";
-    }
-   setState(() {count=co;});
+  void _startListeningToLocationUpdates() {
+    _locationSubscription = eventChannel.receiveBroadcastStream().listen(
+      (dynamic location) {
+        setState(() {
+          _location = location.toString();
+        });
+      },
+      onError: (dynamic error) {
+        print("Error receiving location updates: $error");
+      },
+    );
   }
 
-
-
-@override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-   //if(Platform.isIOS) {
-   //   startService();
-
-    Timer.periodic(const Duration(seconds: 2), (s)async { await  getCount();});
-
+  @override
+  void dispose() {
+    _locationSubscription?.cancel();
+    super.dispose();
   }
-
-
-
-
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body:  Container(
+      body: Container(
         padding: const EdgeInsets.all(12),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Center(child: Text(count,style: TextStyle(fontSize: 20),)),
-            SizedBox(height: 100,),
-
-
             Center(
               child: MaterialButton(
-                child: const Text('start service'),
-                onPressed: ()async {await startService();
-
-
-
+                child: const Text('Start Service'),
+                onPressed: () async {
+                  await _startService();
                 },
               ),
             ),
-
-
+            const SizedBox(height: 20),
+            Text(
+              "Current Location: $_location",
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16),
+            ),
           ],
         ),
       ),
     );
   }
-
-  Future<int> getDataInPref()async{
-    var prefs=await SharedPreferences.getInstance();
-
-    var val= prefs.getInt("task");
-    if(val==null){await prefs.setInt("task", 0);return 0;}
-    else{return val;}
-
-  }
-
-
-  increaseDataInPrefs()async{
-    print("start increasing .......");
-    var prefs=await SharedPreferences.getInstance();
-    var current =await getDataInPref();
-    await prefs.setInt("task",current+1 );
-
-
-    var current2 =await getDataInPref();
-    print("finish increasing .......$current>= $current2");
-  }
-
-  clearCache()async{
-    var prefs=await SharedPreferences.getInstance();
-    prefs.clear();
-  }
 }
-

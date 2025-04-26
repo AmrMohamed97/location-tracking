@@ -18,13 +18,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 
-
 interface MyLocationClient {
-    fun getLocationUpdates(interval: Long): Flow<Location>
+    fun getLocationUpdates(minDistance: Float): Flow<Location>
 
     class AnyException(message: String) : Exception()
 }
-
 
 class MyDefaultLocationClient(
     private val context: Context,
@@ -32,15 +30,15 @@ class MyDefaultLocationClient(
 ) : MyLocationClient {
     @SuppressLint("MissingPermission")
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getLocationUpdates(interval: Long): Flow<Location> {
+    override fun getLocationUpdates(minDistance: Float): Flow<Location> {
         return callbackFlow {
 
-
             //--------------------------------------------------------------------------------------------------------
-            /// check permissions
+            // Check permissions
             if (!context.hasLocationPermissions()) {
                 throw MyLocationClient.AnyException("Missing Permissions for Location")
             }
+
             val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
             val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
             val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
@@ -49,47 +47,37 @@ class MyDefaultLocationClient(
             }
             //--------------------------------------------------------------------------------------------------------
 
-
             //--------------------------------------------------------------------------------------------------------
-            /// create location tracker
-            val request = LocationRequest.Builder(interval)
-                .setMinUpdateDistanceMeters(1f)
-                .setIntervalMillis(1L)
+            // Create location tracker
+            val request = LocationRequest.Builder(0L) // 0L for time-based updates (disabled)
+                .setMinUpdateDistanceMeters(minDistance) // Trigger updates based on distance
                 .setWaitForAccurateLocation(false)
-                .setPriority(100)
+                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                 .build()
             //--------------------------------------------------------------------------------------------------------
 
-
             //--------------------------------------------------------------------------------------------------------
-            //location callback
+            // Location callback
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(p0: LocationResult) {
                     super.onLocationResult(p0)
                     p0.locations.lastOrNull()?.let {
-                        Log.i("", p0.locations.toString())
-                        Counter(context).incrementFunctionCount()
-                        //for notifications
+                        Log.i("MyDefaultLocationClient", "New Location: ${it.latitude}, ${it.longitude}")
                         launch { send(it) }
-
                     }
                 }
             }
             //--------------------------------------------------------------------------------------------------------
 
-
-            //request location updates
+            // Request location updates
             client.requestLocationUpdates(request, locationCallback, Looper.getMainLooper())
 
-
-            //remove location updates
+            // Remove location updates when the flow is closed
             awaitClose { client.removeLocationUpdates(locationCallback) }
-
         }
     }
 
-
-    //check permissions
+    // Check permissions
     private fun Context.hasLocationPermissions(): Boolean {
         return ContextCompat.checkSelfPermission(
             this,
@@ -101,5 +89,4 @@ class MyDefaultLocationClient(
                     android.Manifest.permission.ACCESS_COARSE_LOCATION
                 ) == PackageManager.PERMISSION_GRANTED
     }
-
 }
