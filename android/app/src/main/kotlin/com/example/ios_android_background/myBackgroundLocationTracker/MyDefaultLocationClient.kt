@@ -24,6 +24,7 @@ interface MyLocationClient {
     class AnyException(message: String) : Exception()
 }
 
+// ... existing code ...
 class MyDefaultLocationClient(
     private val context: Context,
     private val client: FusedLocationProviderClient
@@ -32,32 +33,27 @@ class MyDefaultLocationClient(
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getLocationUpdates(minDistance: Float): Flow<Location> {
         return callbackFlow {
-
-            //--------------------------------------------------------------------------------------------------------
-            // Check permissions
+            // تحقق من الصلاحيات
             if (!context.hasLocationPermissions()) {
-                throw MyLocationClient.AnyException("Missing Permissions for Location")
+                close(MyLocationClient.AnyException("Missing Permissions for Location"))
+                return@callbackFlow
             }
 
             val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
             val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
             val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
             if (!isGpsEnabled && !isNetworkEnabled) {
-                throw MyLocationClient.AnyException("GPS is disabled")
+                close(MyLocationClient.AnyException("GPS is disabled"))
+                return@callbackFlow
             }
-            //--------------------------------------------------------------------------------------------------------
 
-            //--------------------------------------------------------------------------------------------------------
-            // Create location tracker
-            val request = LocationRequest.Builder(0L) // 0L for time-based updates (disabled)
-                .setMinUpdateDistanceMeters(minDistance) // Trigger updates based on distance
+            // إعداد طلب الموقع مع تحديث كل متر واحد فقط
+            val request = LocationRequest.Builder(1000L) // تحديث كل ثانية (لضمان التحديث حتى لو لم يتحرك)
+                .setMinUpdateDistanceMeters(minDistance) // تحديث عند الحركة لمسافة معينة
                 .setWaitForAccurateLocation(false)
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                 .build()
-            //--------------------------------------------------------------------------------------------------------
 
-            //--------------------------------------------------------------------------------------------------------
-            // Location callback
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(p0: LocationResult) {
                     super.onLocationResult(p0)
@@ -67,23 +63,18 @@ class MyDefaultLocationClient(
                     }
                 }
             }
-            //--------------------------------------------------------------------------------------------------------
 
-            // Request location updates
             client.requestLocationUpdates(request, locationCallback, Looper.getMainLooper())
-
-            // Remove location updates when the flow is closed
             awaitClose { client.removeLocationUpdates(locationCallback) }
         }
     }
 
-    // Check permissions
     private fun Context.hasLocationPermissions(): Boolean {
         return ContextCompat.checkSelfPermission(
             this,
             android.Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
-                &&
+                ||
                 ContextCompat.checkSelfPermission(
                     this,
                     android.Manifest.permission.ACCESS_COARSE_LOCATION

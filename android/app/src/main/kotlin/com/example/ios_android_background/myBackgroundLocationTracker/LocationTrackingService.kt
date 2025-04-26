@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
+// ... existing code ...
 class LocationTrackingService : Service() {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -45,18 +46,17 @@ class LocationTrackingService : Service() {
 
     private fun start() {
         Log.i("LocationTrackingService", "Start Service")
-
-        // Start location updates
-        myLocationClient.getLocationUpdates(10f)
+        // تأكد من أن الصلاحيات موجودة قبل البدء
+        myLocationClient.getLocationUpdates(1f)
             .catch { e -> e.printStackTrace() }
             .onEach { location ->
                 val lat = location.latitude
                 val long = location.longitude
                 val locationString = "Lat: $lat, Long: $long"
                 Log.i("LocationTrackingService", locationString)
-
-                // Send location to EventChannel
-                eventSink?.success(locationString)
+               android.os.Handler(android.os.Looper.getMainLooper()).post {
+    eventSink?.success(locationString)
+}
             }
             .launchIn(serviceScope)
     }

@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  DartPluginRegistrant.ensureInitialized();
+  // await initializeService();//background services
   runApp(const MyApp());
 }
 
@@ -37,6 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
   static const eventChannel = EventChannel("myLocationUpdates");
   StreamSubscription<dynamic>? _locationSubscription;
   String _location = "Waiting for location...";
+  bool _serviceStarted = false;
 
   @override
   void initState() {
@@ -46,9 +50,17 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _startService() async {
     try {
-      await platform.invokeMethod('startService');
+      final result = await platform.invokeMethod('startService');
+      setState(() {
+        _serviceStarted = true;
+      });
+      print("Service started: $result");
     } on PlatformException catch (e) {
       print("Failed to start service: ${e.message}");
+      setState(() {
+        _serviceStarted = false;
+      });
+      // يمكنك هنا عرض رسالة للمستخدم تطلب منه إعطاء الصلاحيات
     }
   }
 
@@ -56,6 +68,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _locationSubscription = eventChannel.receiveBroadcastStream().listen(
       (dynamic location) {
         setState(() {
+          print("Received location update: $location");
           _location = location.toString();
         });
       },
@@ -82,8 +95,8 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             Center(
               child: MaterialButton(
-                child: const Text('Start Service'),
-                onPressed: () async {
+                child: Text(_serviceStarted ? 'Service Running' : 'Start Service'),
+                onPressed: _serviceStarted ? null : () async {
                   await _startService();
                 },
               ),
