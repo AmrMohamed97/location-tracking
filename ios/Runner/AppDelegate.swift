@@ -1,6 +1,6 @@
 import Flutter
 import UIKit
-import myBackground
+import myBackground // أضف هذا السطر
  
 @UIApplicationMain
 @objc class AppDelegate: FlutterAppDelegate {
@@ -29,7 +29,7 @@ import myBackground
         
         // EventChannel for sending continuous location updates
         let eventChannel = FlutterEventChannel(name: "myLocationUpdates", binaryMessenger: controller.binaryMessenger)
-        eventChannel.setStreamHandler(LocationStreamHandler(locationManager: &locationManager, eventSink: &eventSink))
+        eventChannel.setStreamHandler(LocationStreamHandler(locationManager: locationManager, eventSink: eventSink))
         
         GeneratedPluginRegistrant.register(with: self)
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
