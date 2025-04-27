@@ -1,5 +1,6 @@
 import Flutter
 import UIKit
+import myBackground
  
 @UIApplicationMain
 @objc class AppDelegate: FlutterAppDelegate {
