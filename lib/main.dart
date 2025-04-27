@@ -50,13 +50,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _startService() async {
     try {
-      final result = await platform.invokeMethod('startService');
+        await platform.invokeMethod('startService');
       setState(() {
         _serviceStarted = true;
       });
-      print("Service started: $result");
+      // print("Service started: $result");
     } on PlatformException catch (e) {
-      print("Failed to start service: ${e.message}");
+      // print("Failed to start service: ${e.message}");
       setState(() {
         _serviceStarted = false;
       });
@@ -68,12 +68,12 @@ class _MyHomePageState extends State<MyHomePage> {
     _locationSubscription = eventChannel.receiveBroadcastStream().listen(
       (dynamic location) {
         setState(() {
-          print("Received location update: $location");
+          // print("Received location update: $location");
           _location = location.toString();
         });
       },
       onError: (dynamic error) {
-        print("Error receiving location updates: $error");
+        // print("Error receiving location updates: $error");
       },
     );
   }
@@ -95,10 +95,13 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             Center(
               child: MaterialButton(
-                child: Text(_serviceStarted ? 'Service Running' : 'Start Service'),
-                onPressed: _serviceStarted ? null : () async {
-                  await _startService();
-                },
+                onPressed: _serviceStarted
+                    ? null
+                    : () async {
+                        await _startService();
+                      },
+                child:
+                    Text(_serviceStarted ? 'Service Running' : 'Start Service'),
               ),
             ),
             const SizedBox(height: 20),

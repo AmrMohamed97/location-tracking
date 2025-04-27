@@ -24,7 +24,6 @@ interface MyLocationClient {
     class AnyException(message: String) : Exception()
 }
 
-// ... existing code ...
 class MyDefaultLocationClient(
     private val context: Context,
     private val client: FusedLocationProviderClient
@@ -48,8 +47,8 @@ class MyDefaultLocationClient(
             }
 
             // إعداد طلب الموقع مع تحديث كل متر واحد فقط
-            val request = LocationRequest.Builder(1000L) // تحديث كل ثانية (لضمان التحديث حتى لو لم يتحرك)
-                .setMinUpdateDistanceMeters(minDistance) // تحديث عند الحركة لمسافة معينة
+            val request = LocationRequest.Builder(0L) // 0 تعني بدون تحديث زمني دوري
+                .setMinUpdateDistanceMeters(minDistance) // تحديث فقط عند قطع المسافة المطلوبة
                 .setWaitForAccurateLocation(false)
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                 .build()

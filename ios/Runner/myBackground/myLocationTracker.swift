@@ -48,23 +48,17 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         let latitude = location.coordinate.latitude
+        let latitude = location.coordinate.latitude
         let longitude = location.coordinate.longitude
-        
-        // Log the location
         print("New location: \(latitude), \(longitude)")
-        
-        // Increment the count in UserDefaults
         let defaults = UserDefaults.standard
         let currentCount = defaults.integer(forKey: "count")
         defaults.set(currentCount + 1, forKey: "count")
-        
-        // Send location updates to Flutter
         if let sink = eventSink {
             let locationData = ["latitude": latitude, "longitude": longitude]
             sink(locationData)
         }
     }
-    
     // Handle any errors
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("Location update failed with error: \(error.localizedDescription)")

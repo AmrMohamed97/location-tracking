@@ -47,7 +47,7 @@ class LocationTrackingService : Service() {
     private fun start() {
         Log.i("LocationTrackingService", "Start Service")
         // تأكد من أن الصلاحيات موجودة قبل البدء
-        myLocationClient.getLocationUpdates(1f)
+        myLocationClient.getLocationUpdates(10f)
             .catch { e -> e.printStackTrace() }
             .onEach { location ->
                 val lat = location.latitude

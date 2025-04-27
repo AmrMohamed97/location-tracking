@@ -1,6 +1,6 @@
 import Flutter
 import UIKit
-
+ 
 @UIApplicationMain
 @objc class AppDelegate: FlutterAppDelegate {
     
@@ -33,37 +33,4 @@ import UIKit
         GeneratedPluginRegistrant.register(with: self)
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
     }
-}
-
-// StreamHandler for EventChannel
-class LocationStreamHandler: NSObject, FlutterStreamHandler {
-    
-    weak var locationManager: LocationManager?
-    var eventSink: FlutterEventSink?
-    
-    init(locationManager: inout LocationManager?, eventSink: inout FlutterEventSink?) {
-        self.locationManager = locationManager
-        self.eventSink = eventSink
-    }
-    
-    func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
-        eventSink = events
-        locationManager?.setEventSink(events)
-        return nil
-    }
-    
-    func onCancel(withArguments arguments: Any?) -> FlutterError? {
-        eventSink = nil
-        locationManager?.setEventSink(nil)
-        return nil
-    }
-}    // SwiftFlutterBackgroundServicePlugin.taskIdentifier = "location"
-     
-    
-      GeneratedPluginRegistrant.register(with: self)
-     
-      
-//      locationManager?.startTrackingLocation()
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
-  }
 }
