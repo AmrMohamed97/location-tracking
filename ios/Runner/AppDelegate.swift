@@ -1,6 +1,5 @@
 import Flutter
 import UIKit
-import myBackground.LocationStreamHandler
  
 @UIApplicationMain
 @objc class AppDelegate: FlutterAppDelegate {
@@ -35,3 +34,5 @@ import myBackground.LocationStreamHandler
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
     }
 }
+import myBackground.LocationStreamHandler
+// تم حذف import myBackground.LocationStreamHandler لأنه غير ضروري
