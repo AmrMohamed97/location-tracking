@@ -48,13 +48,9 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         let latitude = location.coordinate.latitude
-        // let latitude = location.coordinate.latitude
         let longitude = location.coordinate.longitude
         print("New location: \(latitude), \(longitude)")
-        let defaults = UserDefaults.standard
-        let currentCount = defaults.integer(forKey: "count")
-        defaults.set(currentCount + 1, forKey: "count")
-        if let sink = eventSink {
+        if let sink = eventSink { // تحقق أن eventSink ليس nil
             let locationData = ["latitude": latitude, "longitude": longitude]
             sink(locationData)
         }

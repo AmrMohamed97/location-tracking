@@ -5,7 +5,7 @@ import UIKit
 @objc class AppDelegate: FlutterAppDelegate {
     
     var locationManager: LocationManager?
-    var eventSink: FlutterEventSink?
+    var locationStreamHandler: LocationStreamHandler?
     
     override func application(
         _ application: UIApplication,
@@ -14,11 +14,14 @@ import UIKit
         
         let controller = window?.rootViewController as! FlutterViewController
         
-        // MethodChannel for starting the service
+        // تهيئة LocationManager و LocationStreamHandler مرة واحدة فقط
+        locationManager = LocationManager()
+        locationStreamHandler = LocationStreamHandler(locationManager: locationManager, eventSink: nil)
+        
+        // MethodChannel
         let nativeChannel = FlutterMethodChannel(name: "myLocationTracking", binaryMessenger: controller.binaryMessenger)
         nativeChannel.setMethodCallHandler { [weak self] (call: FlutterMethodCall, result: @escaping FlutterResult) in
             if call.method == "startService" {
-                self?.locationManager = LocationManager()
                 self?.locationManager?.startTrackingLocation()
                 result(1)
             } else {
@@ -26,13 +29,12 @@ import UIKit
             }
         }
         
-        // EventChannel for sending continuous location updates
+        // EventChannel
         let eventChannel = FlutterEventChannel(name: "myLocationUpdates", binaryMessenger: controller.binaryMessenger)
-        eventChannel.setStreamHandler(LocationStreamHandler(locationManager: locationManager, eventSink: eventSink))
+        eventChannel.setStreamHandler(locationStreamHandler)
         
         GeneratedPluginRegistrant.register(with: self)
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
     }
 }
 import myBackground.LocationStreamHandler
-// تم حذف import myBackground.LocationStreamHandler لأنه غير ضروري

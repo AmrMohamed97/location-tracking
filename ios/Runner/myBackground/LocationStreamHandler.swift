@@ -14,7 +14,7 @@ class LocationStreamHandler: NSObject, FlutterStreamHandler {
 
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
         self.eventSink = events
-        locationManager?.setEventSink(events)
+        locationManager?.setEventSink(events) // تحديث eventSink في LocationManager
         return nil
     }
 
