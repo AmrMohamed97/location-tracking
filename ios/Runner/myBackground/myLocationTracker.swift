@@ -1,77 +1,69 @@
-import BackgroundTasks
-import Flutter
-import UIKit
 import CoreLocation
+import Flutter
 
 class LocationManager: NSObject, CLLocationManagerDelegate {
-    
+
     private let locationManager = CLLocationManager()
     private var eventSink: FlutterEventSink?
-    
+
     override init() {
         super.init()
         setupLocationManager()
     }
-    
+
     private func setupLocationManager() {
         locationManager.delegate = self
-        requestLocationPermission()
-        locationManager.allowsBackgroundLocationUpdates = true
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.distanceFilter = 10
+        locationManager.allowsBackgroundLocationUpdates = true
         locationManager.pausesLocationUpdatesAutomatically = false
         locationManager.activityType = .fitness
         locationManager.showsBackgroundLocationIndicator = true
-        locationManager.distanceFilter = 10 // Trigger updates when moving 10 meters
+        requestPermission()
     }
-    
-    // Request permission from the user
-    func requestLocationPermission() {
-        locationManager.requestAlwaysAuthorization() // Request "Always" authorization
+
+    func requestPermission() {
+        locationManager.requestAlwaysAuthorization()
     }
-    
-    // Start updating the location
-    func startTrackingLocation() {
-        locationManager.startUpdatingLocation()
+
+    func startTracking() {
+        // Important: Use significant location changes to wake app after termination
+        locationManager.startMonitoringSignificantLocationChanges()
     }
-    
-    // Stop updating the location
-    func stopTrackingLocation() {
+
+    func stopTracking() {
         locationManager.stopUpdatingLocation()
+        locationManager.stopMonitoringSignificantLocationChanges()
     }
-    
-    // Pass the event sink from Flutter
+
     func setEventSink(_ sink: FlutterEventSink?) {
-        eventSink = sink
+        self.eventSink = sink
     }
-    
-    // CLLocationManagerDelegate method - called when a new location is received
+
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         let latitude = location.coordinate.latitude
         let longitude = location.coordinate.longitude
         print("New location: \(latitude), \(longitude)")
-        if let sink = eventSink { // تحقق أن eventSink ليس nil
-            let locationData = ["latitude": latitude, "longitude": longitude]
-            sink(locationData)
-        }
+        let locationData: [String: Any] = ["latitude": latitude, "longitude": longitude]
+        eventSink?(locationData)
     }
-    // Handle any errors
+
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("Location update failed with error: \(error.localizedDescription)")
+        print("Location error: \(error.localizedDescription)")
         eventSink?(FlutterError(code: "LOCATION_ERROR", message: error.localizedDescription, details: nil))
     }
-    
+
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         switch manager.authorizationStatus {
         case .authorizedAlways:
-            print("Location authorized: Always")
-            manager.startUpdatingLocation()
+            print("Authorized Always")
         case .authorizedWhenInUse:
-            print("Location authorized: When In Use")
+            print("Authorized When In Use")
         case .denied, .restricted:
-            print("Location permission denied or restricted")
+            print("Permission Denied or Restricted")
         case .notDetermined:
-            print("Location permission not determined yet")
+            print("Permission Not Determined")
         @unknown default:
             break
         }
